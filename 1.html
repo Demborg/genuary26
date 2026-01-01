@@ -35,9 +35,9 @@ const verts = [
 const quads = [
 	[0, 1, 2, 3],
 	[0, 3, 6, 4],
-  [0, 1, 5, 4],
 	[7, 6, 4, 5],
 	[7, 5, 1, 2],
+	[7, 6, 3, 2],
 ]
 function Rx(theta) {	
 	const ct = Math.cos(theta)
@@ -65,7 +65,7 @@ function mul(m) {
 	]
 }
 function toView(s, dx, dy) {
-	return (v) => [s * v[0] + dx, s * v[1] + dy]
+	return (v) => [s * v[0] + dx, s * v[1] + dy, v[2]]
 }
 function realizer(verts) {
 	return (indices) => indices.map((i) => verts[i])
@@ -81,6 +81,7 @@ function filler(ctx) {
 	return (poly) => {
 		trace(poly, ctx)
 		ctx.fill()
+		ctx.stroke()
   }
 }
 function stroker(ctx) {
@@ -119,6 +120,10 @@ window.addEventListener("resize", resize)
 
 const squareSize = 75
 
+function compareQuads(a, b) {
+	return Math.max(...a.map(s => s[2])) - Math.max(...b.map(s => s[2]))
+} 
+
 function render() {
 ctx.fillStyle = bg
 ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -135,10 +140,9 @@ ny = Math.floor(canvas.height / squareSize)
 			transformed = verts
 				.map(mul(Rx(tau)))
 				.map(mul(Ry(phi)))
-				.map(toView(squareSize/3, canvas.width / nx * (i + 0.5), canvas.height / ny * (j + 0.5)))
-			stuff = quads.map(realizer(transformed))
-			stuff.forEach(filler(ctx))
-			stuff.forEach(stroker(ctx))
+				.map(toView(squareSize/3, canvas.width / nx * (i + 0.5), canvas.height / ny * ( j + 0.5)))
+			const realized = quads.map(realizer(transformed)).sort(compareQuads)
+			realized.forEach(filler(ctx))
 		}
 	}
 	requestAnimationFrame(render)
