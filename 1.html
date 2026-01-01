@@ -68,16 +68,26 @@ function toView(s, dx, dy) {
 function realizer(verts) {
 	return (indices) => indices.map((i) => verts[i])
 }
-function tracer(ctx) {
-	return (poly) => {
+
+function trace(poly, ctx) {
 		ctx.moveTo(poly[0][0], poly[0][1])
 		ctx.beginPath()
 		poly.forEach((p) => ctx.lineTo(p[0], p[1]))
 		ctx.closePath()
-		ctx.stroke()
+}
+function filler(ctx) {
+	return (poly) => {
+		trace(poly, ctx)
 		ctx.fill()
   }
 }
+function stroker(ctx) {
+	return (poly) => {
+		trace(poly, ctx)
+		ctx.stroke()
+	}
+}
+
 
 const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
@@ -95,12 +105,23 @@ function resize() {
 	canvas.width = window.innerWidth
 	canvas.height = window.innerHeight
 }
+
+function makePalette() {
+	const hue = Math.random() * 360
+	const fgSaturation = 0.05 + Math.random() * 0.1
+	return [`oklch(60% ${fgSaturation} ${hue})`, `oklch(30% 0.1 ${hue})`]
+}
+[fg, bg] = makePalette()
+
 window.addEventListener("resize", resize)
 
 const squareSize = 100
 
 function render() {
-ctx.clearRect(0, 0, canvas.width, canvas.height)
+ctx.fillStyle = bg
+ctx.fillRect(0, 0, canvas.width, canvas.height)
+ctx.fillStyle = fg
+ctx.strokeStyle = bg
 nx = Math.floor(canvas.width / squareSize)
 ny = Math.floor(canvas.height / squareSize)
 	for (const i of Array(nx).keys()) {
@@ -114,7 +135,8 @@ ny = Math.floor(canvas.height / squareSize)
 				.map(mul(Ry(phi)))
 				.map(toView(30, canvas.width / nx * (i + 0.5), canvas.height / ny * (j + 0.5)))
 			stuff = quads.map(realizer(transformed))
-			stuff.forEach(tracer(ctx))
+			stuff.forEach(filler(ctx))
+			stuff.forEach(stroker(ctx))
 		}
 	}
 	requestAnimationFrame(render)
