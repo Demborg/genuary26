@@ -37,22 +37,22 @@ const quads = [
 	[7, 5, 1, 2],
 
 ]
-function Rz(theta) {	
-	const ct = Math.cos(theta)
-	const st = Math.sin(theta)
-	return [
-		[ ct, st,  0],
-		[-st, ct,  0],
-		[  0,  0,  1],
-	]
-}
 function Rx(theta) {	
 	const ct = Math.cos(theta)
 	const st = Math.sin(theta)
 	return [
-		[1,   0,   0],
-		[0,  ct,  st],
-		[0, -st,  ct],
+		[1,   0,  0],
+		[0,  ct, st],
+		[0, -st, ct],
+	]
+}
+function Ry(theta) {	
+	const ct = Math.cos(theta)
+	const st = Math.sin(theta)
+	return [
+		[ ct,  0,  st],
+		[  0,  1,  0],
+		[-st,  0,  ct],
 	]
 }
 function mul(m) {
@@ -110,8 +110,8 @@ ny = Math.floor(canvas.height / squareSize)
 			const yfrac = j / ny - pointer.y
 			const tau = Math.PI / 2 * yfrac
 			transformed = verts
-				.map(mul(Rz(tau)))
-				.map(mul(Rx(phi)))
+				.map(mul(Rx(tau)))
+				.map(mul(Ry(phi)))
 				.map(toView(30, canvas.width / nx * (i + 0.5), canvas.height / ny * (j + 0.5)))
 			stuff = quads.map(realizer(transformed))
 			stuff.forEach(tracer(ctx))
