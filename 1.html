@@ -120,6 +120,14 @@ window.addEventListener("resize", resize)
 
 const squareSize = 75
 
+function normalizeVertsXY(verts) {
+	const scale = Math.max(
+		...verts.map(v => Math.abs(v[0])),
+		...verts.map(v => Math.abs(v[1])),
+	)
+	return verts.map(v => [v[0] / scale, v[1] / scale])
+}
+
 function render() {
 ctx.fillStyle = bg
 ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -131,12 +139,12 @@ ny = Math.floor(canvas.height / squareSize)
 		const xfrac = i / nx - pointer.x + 1 / nx / 2
 		const phi = Math.PI / 2 * xfrac
 		for (const j of Array(ny).keys()) {
-			const yfrac = j / ny - pointer.y
-			const tau = Math.PI / 2 * yfrac + 1 / ny / 2
-			transformed = verts
+			const yfrac = j / ny - pointer.y + 1 / ny / 2
+			const tau = Math.PI / 2 * yfrac 
+			transformed = normalizeVertsXY(verts
 				.map(mul(Rx(tau)))
-				.map(mul(Ry(phi)))
-				.map(toView(23, canvas.width / nx * (i + 0.5), canvas.height / ny * (j + 0.5)))
+				.map(mul(Ry(phi))))
+				.map(toView(squareSize/2, canvas.width / nx * (i + 0.5), canvas.height / ny * (j + 0.5)))
 			stuff = quads.map(realizer(transformed))
 			stuff.forEach(filler(ctx))
 			stuff.forEach(stroker(ctx))
