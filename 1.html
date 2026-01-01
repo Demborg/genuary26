@@ -128,11 +128,11 @@ ctx.strokeStyle = bg
 nx = Math.floor(canvas.width / squareSize)
 ny = Math.floor(canvas.height / squareSize)
 	for (const i of Array(nx).keys()) {
-		const xfrac = i / nx - pointer.x
+		const xfrac = i / nx - pointer.x + 1 / nx / 2
 		const phi = Math.PI / 2 * xfrac
 		for (const j of Array(ny).keys()) {
 			const yfrac = j / ny - pointer.y
-			const tau = Math.PI / 2 * yfrac
+			const tau = Math.PI / 2 * yfrac + 1 / ny / 2
 			transformed = verts
 				.map(mul(Rx(tau)))
 				.map(mul(Ry(phi)))
