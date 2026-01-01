@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 
 <html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	</head>
 	<body>
 		<canvas id="canvas" height=1000, width=1000 style="width:100%"/>
 	</body>
@@ -115,7 +118,7 @@ function makePalette() {
 
 window.addEventListener("resize", resize)
 
-const squareSize = 100
+const squareSize = 75
 
 function render() {
 ctx.fillStyle = bg
@@ -133,7 +136,7 @@ ny = Math.floor(canvas.height / squareSize)
 			transformed = verts
 				.map(mul(Rx(tau)))
 				.map(mul(Ry(phi)))
-				.map(toView(30, canvas.width / nx * (i + 0.5), canvas.height / ny * (j + 0.5)))
+				.map(toView(23, canvas.width / nx * (i + 0.5), canvas.height / ny * (j + 0.5)))
 			stuff = quads.map(realizer(transformed))
 			stuff.forEach(filler(ctx))
 			stuff.forEach(stroker(ctx))
