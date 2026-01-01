@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+
+<html>
+	<body>
+		<canvas id="canvas" height=1000, width=1000 style="width:100%"/>
+	</body>
+</html>
+
+<script>
+const verts = [
+	[1,  1,  1],
+	[1, -1,  1],
+	[1, -1, -1],
+	[1,  1, -1],
+	[-1,  1,  1],
+	[-1, -1,  1],
+	[-1,  1, -1],
+]
+const quads = [
+	[0, 1, 2, 3],
+	[0, 3, 6, 4],
+  [0, 1, 5, 4],
+]
+function Rz(theta) {	
+	const ct = Math.cos(theta)
+	const st = Math.sin(theta)
+	return [
+		[ ct, st,  0],
+		[-st, ct,  0],
+		[  0,  0,  1],
+	]
+}
+function Rx(theta) {	
+	const ct = Math.cos(theta)
+	const st = Math.sin(theta)
+	return [
+		[1,   0,   0],
+		[0,  ct,  st],
+		[0, -st,  ct],
+	]
+}
+function mul(m) {
+	return (v) => [
+		m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2],
+		m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2],
+		m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2],
+	]
+}
+function toView(s, dx, dy) {
+	return (v) => [s * v[0] + dx, s * v[1] + dy]
+}
+function realizer(verts) {
+	return (indices) => indices.map((i) => verts[i])
+}
+function tracer(ctx) {
+	return (poly) => {
+		ctx.moveTo(poly[0][0], poly[0][1])
+		ctx.beginPath()
+		poly.forEach((p) => ctx.lineTo(p[0], p[1]))
+		ctx.closePath()
+		ctx.stroke()
+		ctx.fill()
+  }
+}
+
+const canvas = document.getElementById("canvas")
+const ctx = canvas.getContext("2d")
+
+for (const i of Array(10).keys()) {
+	const phi = -i * Math.PI / (10 * 2)
+	for (const j of Array(10).keys()) {
+		const tau = -j * Math.PI / (10 * 2)
+		transformed = verts
+			.map(mul(Rz(tau)))
+			.map(mul(Rx(phi)))
+			.map(toView(30, 100 * i + 50, 100 * j + 50))
+		stuff = quads.map(realizer(transformed))
+		stuff.forEach(tracer(ctx))
+	}
+}
+
+
+
+
+
+</script>
