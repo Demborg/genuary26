@@ -130,6 +130,10 @@ function animate(time) {
 	}
 	const dt = time - previousTime 
 	previousTime = time
+	if (dt > 100) {
+		requestAnimationFrame(animate)
+		return
+	}
 	forces = computeForce(positions, velocities) 
 	
 	velocities = velocities.map((v, i) => add(v, scale(forces[i], dt)))
