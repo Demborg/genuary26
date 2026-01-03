@@ -91,8 +91,15 @@ function computeForce(positions, velocities) {
 	return springForce.map((s, i) => add(add(s, [0, g]), damperForce[i]))
 }
 
+function flip(p, v) {
+	if ((p[1] < 0 && v[1] < 0) || (p[1] > 700 && v[1] > 0)) {
+		v = [v[0], -v[1]]
+	}
+	return v
+}
+
 function bounce(positions, velocities) {
-	return velocities.map((v, i) => v[1] > 0 && positions[i][1] > 700 ? [v[0], -v[1]] : v)
+	return velocities.map((v, i) => flip(positions[i], v))
 }
 
 const canvas = document.getElementById("canvas")
