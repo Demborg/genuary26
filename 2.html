@@ -61,7 +61,7 @@ function length(a) {
 }
 
 function spring(diff) {
-	const k = pressed ? 0.00000001 : 0.000001
+	const k = pressed ? 0.000000005 : 0.000001
 	const l = 173 * 1
 	return scale(diff, k * (l - length(diff))) 
 }
@@ -69,6 +69,25 @@ function spring(diff) {
 function damper(diff, vDiff) {
 	const k = 0.0000001
 	return scale(diff, -dot(vDiff, diff) * k)
+}
+
+function area(triangle) {
+	const a = diff(triangle[0], triangle[1])
+	const b = diff(triangle[0], triangle[2])
+	return a[0] * b[1] - a[1] * b[0]
+}
+
+function center(positions) {
+	return scale(positions.reduce(add), 1/positions.length)
+}
+
+function ballon(triangle) {
+	const expectedArea = 25919
+	const k = 0.00000001
+	const a = area(triangle)
+	const c = center(triangle)
+
+	return triangle.map(p => scale(diff(c, p), k * (a - expectedArea))) 
 }
 
 function computeForce(positions, velocities) {
@@ -88,7 +107,9 @@ function computeForce(positions, velocities) {
 		.map((vDiff, i) => damper(bwd[i], vDiff))
 	const damperForce = vfwd.map((f, i) => add(f, vbwd[i]))
 
-	return springForce.map((s, i) => add(add(s, [0, g]), damperForce[i]))
+	const ballonForce = ballon(positions)
+
+	return springForce.map((s, i) => add(add(add(s, [0, g]), damperForce[i]), ballonForce[i]))
 }
 
 function flip(p, v) {
