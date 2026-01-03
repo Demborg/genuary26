@@ -55,26 +55,29 @@ function dot(a, b) {
 	return a[0] * b[0] + a[1] * b[1]
 }
 
+function cross(a, b) {
+	return a[0] * b[1] - a[1] * b[0]
+}
+
 function length(a) {
 	const l = Math.sqrt(dot(a, a))
 	return l
 }
 
 function spring(diff) {
-	const k = pressed ? 0.000000005 : 0.000001
-	const l = 173 * 1
-	return scale(diff, k * (l - length(diff))) 
+	const k = pressed ? 0.0001 : 0.001
+	return scale(diff, k * (relaxedLength - length(diff))/ length(diff)) 
 }
 
 function damper(diff, vDiff) {
-	const k = 0.0000001
-	return scale(diff, -dot(vDiff, diff) * k)
+	const k = 0.0002
+	return scale(diff, -dot(vDiff, diff) * k / length(diff))
 }
 
-function area(triangle) {
-	const a = diff(triangle[0], triangle[1])
-	const b = diff(triangle[0], triangle[2])
-	return a[0] * b[1] - a[1] * b[0]
+function area(positions) {
+	return positions
+		.map((p, i) => cross(p, positions[(i + 1) % positions.length]))
+		.reduce((a, b) => a+b)
 }
 
 function center(positions) {
@@ -82,8 +85,7 @@ function center(positions) {
 }
 
 function ballon(triangle) {
-	const expectedArea = 25919
-	const k = 0.00000001
+	const k = 0.00000005
 	const a = area(triangle)
 	const c = center(triangle)
 
@@ -139,7 +141,9 @@ const bindInteractions = (element) => {
 };
 bindInteractions(canvas);
 
-let positions = makeBlob(3, 100, 350, 500)
+let positions = makeBlob(15, 100, 350, 200)
+const expectedArea = area(positions)
+const relaxedLength = length(diff(positions[0], positions[1]))
 let velocities = positions.map(() => [0, 0]) 
 let previousTime
 
