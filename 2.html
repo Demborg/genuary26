@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	</head>
+	<body>
+		<canvas id="canvas" height=700, width=700/>
+	</body>
+</html>
+
+<style>
+body {
+	background-color: oklch(30% 0.1 200);
+}
+canvas {
+	touch-action: none; 
+  display: block;
+  width: 100%;
+}
+</style>
+
+<script>
+function makeBlob(n, size, x, y) {
+	return Array.from(
+		Array(n)
+		.keys()
+		.map(i => i/n * Math.PI * 2)
+		.map(angle => [
+			Math.cos(angle) * size + x,
+			Math.sin(angle) * size + y
+		])
+	)
+}
+function trace(poly, ctx) {
+	ctx.moveTo(poly[0][0], poly[0][1])
+	ctx.beginPath()
+	poly.forEach((p) => ctx.lineTo(p[0], p[1]))
+	ctx.closePath()
+}
+
+function add(a, b) {
+	return [a[0] + b[0], a[1] + b[1]]
+}
+
+function scale(a, s) {
+	return [a[0] * s, a[1] * s]
+}
+
+function diff(a, b) {
+	return add(a, scale(b, -1))
+}
+
+function dot(a, b) {
+	return a[0] * b[0] + a[1] * b[1]
+}
+
+function length(a) {
+	const l = Math.sqrt(dot(a, a))
+	return l
+}
+
+function spring(diff) {
+	const k = pressed ? 0.00000001 : 0.000001
+	const l = 173 * 1
+	return scale(diff, k * (l - length(diff))) 
+}
+
+function damper(diff, vDiff) {
+	const k = 0.0000001
+	return scale(diff, -dot(vDiff, diff) * k)
+}
+
+function computeForce(positions, velocities) {
+	const N = positions.length
+	const g = 0.0001
+	const fwd = positions
+		.map((p, i) => diff(p, positions[(i+1 + N) % N]))
+	const bwd = positions
+		.map((p, i) => diff(p, positions[(i-1 + N) % N]))
+	const springForce = fwd.map((f, i) => add(spring(f), spring(bwd[i])))
+	
+	const vfwd = velocities
+		.map((p, i) => diff(p, velocities[(i+1 + N) % N]))
+		.map((vDiff, i) => damper(fwd[i], vDiff))
+	const vbwd = velocities
+		.map((p, i) => diff(p, velocities[(i-1 + N) % N]))
+		.map((vDiff, i) => damper(bwd[i], vDiff))
+	const damperForce = vfwd.map((f, i) => add(f, vbwd[i]))
+
+	return springForce.map((s, i) => add(add(s, [0, g]), damperForce[i]))
+}
+
+function bounce(positions, velocities) {
+	return velocities.map((v, i) => v[1] > 0 && positions[i][1] > 700 ? [v[0], -v[1]] : v)
+}
+
+const canvas = document.getElementById("canvas")
+const ctx = canvas.getContext("2d")
+
+let pressed = false
+const handleStart = (e) => {
+	pressed = true
+};
+const handleEnd = () => {pressed = false};
+const startEvents = ['mousedown', 'touchstart'];
+const endEvents = ['mouseup', 'mouseleave', 'touchend', 'touchcancel'];
+const bindInteractions = (element) => {
+  startEvents.forEach(event => element.addEventListener(event, handleStart));
+  endEvents.forEach(event => element.addEventListener(event, handleEnd));
+};
+bindInteractions(canvas);
+
+let positions = makeBlob(3, 100, 350, 500)
+let velocities = positions.map(() => [0, 0]) 
+let previousTime
+
+function animate(time) {
+	if (previousTime === undefined) {
+		previousTime = time
+		requestAnimationFrame(animate)
+		return
+	}
+	const dt = time - previousTime 
+	previousTime = time
+	forces = computeForce(positions, velocities) 
+	
+	velocities = velocities.map((v, i) => add(v, scale(forces[i], dt)))
+	velocities = bounce(positions, velocities)
+	positions = positions.map((p, i)=> add(p, scale(velocities[i], dt)))
+	ctx.fillStyle = "oklch(70% 0.3 200)"
+	ctx.fillRect(0, 0, 1000, 1000)
+	ctx.fillStyle = "oklch(50% 0.2 20)"
+	trace(positions, ctx)
+	ctx.fill()
+	requestAnimationFrame(animate)
+}
+
+requestAnimationFrame(animate)
+
+
+</script>
