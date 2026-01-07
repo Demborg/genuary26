@@ -76,13 +76,13 @@ function clip(a, s) {
 }
 
 function spring(diff) {
-	const k = pressed ? 0.0001 : 0.001
+	const k = pressed ? 0.000001 : 0.001
 	const magnitude = clip(k * (relaxedLength - length(diff)), 10)
 	return scale(normalize(diff), magnitude)
 }
 
 function damper(diff, vDiff) {
-	const k = 0.01
+	const k = 0.02
 	const n = normalize(diff)
 	const magnitude = clip(-dot(vDiff, n) * k, 10)
 	return scale(n, magnitude)
@@ -94,15 +94,16 @@ function area(positions) {
 		.reduce((a, b) => a+b)
 }
 
-function center(positions) {
-	return scale(positions.reduce(add), 1/positions.length)
+function normal(v) {
+	return [-v[1], v[0]]
 }
 
-function ballon(triangle) {
-	const k = 0.00000005
-	const a = area(triangle)
-	const c = center(triangle)
-	return triangle.map(p => scale(diff(c, p), k * (a - expectedArea))) 
+function ballon(positions, fwd, bwd) {
+	const k = 0.000000005
+	const a = area(positions)
+
+	
+	return fwd.map((f, i) => scale(normal(diff(f, bwd[i])), k * (expectedArea-a))) 
 }
 
 function computeForce(positions, velocities) {
@@ -122,7 +123,7 @@ function computeForce(positions, velocities) {
 		.map((vDiff, i) => damper(bwd[i], vDiff))
 	const damperForce = vfwd.map((f, i) => add(f, vbwd[i]))
 
-	const ballonForce = ballon(positions)
+	const ballonForce = ballon(positions, fwd, bwd)
 	return springForce.map((s, i) => add(add(add(s, [0, g]), damperForce[i]), ballonForce[i]))
 }
 
@@ -165,12 +166,8 @@ function animate(time) {
 		requestAnimationFrame(animate)
 		return
 	}
-	const dt = time - previousTime 
+	const dt = Math.min(time - previousTime, 16)
 	previousTime = time
-	if (dt > 100) {
-		requestAnimationFrame(animate)
-		return
-	}
 	forces = computeForce(positions, velocities) 
 	
 	velocities = velocities.map((v, i) => add(v, scale(forces[i], dt)))
