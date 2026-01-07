@@ -64,14 +64,28 @@ function length(a) {
 	return l
 }
 
+function normalize(a) {
+	return scale(a, 1/length(a)) 
+}
+
+function clip(a, s) {
+	if (Math.abs(a) > s) {
+		 return s * Math.sign(a)
+	}
+	return a
+}
+
 function spring(diff) {
 	const k = pressed ? 0.0001 : 0.001
-	return scale(diff, k * (relaxedLength - length(diff))/ length(diff)) 
+	const magnitude = clip(k * (relaxedLength - length(diff)), 10)
+	return scale(normalize(diff), magnitude)
 }
 
 function damper(diff, vDiff) {
-	const k = 0.0002
-	return scale(diff, -dot(vDiff, diff) * k / length(diff))
+	const k = 0.01
+	const n = normalize(diff)
+	const magnitude = clip(-dot(vDiff, n) * k, 10)
+	return scale(n, magnitude)
 }
 
 function area(positions) {
@@ -88,7 +102,6 @@ function ballon(triangle) {
 	const k = 0.00000005
 	const a = area(triangle)
 	const c = center(triangle)
-
 	return triangle.map(p => scale(diff(c, p), k * (a - expectedArea))) 
 }
 
@@ -110,7 +123,6 @@ function computeForce(positions, velocities) {
 	const damperForce = vfwd.map((f, i) => add(f, vbwd[i]))
 
 	const ballonForce = ballon(positions)
-
 	return springForce.map((s, i) => add(add(add(s, [0, g]), damperForce[i]), ballonForce[i]))
 }
 
@@ -164,11 +176,14 @@ function animate(time) {
 	velocities = velocities.map((v, i) => add(v, scale(forces[i], dt)))
 	velocities = bounce(positions, velocities)
 	positions = positions.map((p, i)=> add(p, scale(velocities[i], dt)))
-	ctx.fillStyle = "oklch(70% 0.3 200)"
+	ctx.fillStyle = "oklch(70% 0.07 200)"
 	ctx.fillRect(0, 0, 1000, 1000)
-	ctx.fillStyle = "oklch(50% 0.2 20)"
+	ctx.fillStyle = "oklch(50% 0.15 20)"
+	ctx.strokeStyle = "oklch(70% 0.15 20)"
+	ctx.lineWidth = 5
 	trace(positions, ctx)
 	ctx.fill()
+	ctx.stroke()
 	requestAnimationFrame(animate)
 }
 
